@@ -16,6 +16,11 @@ class FileDecryptionPage extends StatefulWidget {
 class _FileDecryptionPageState extends State<FileDecryptionPage> {
   TextEditingController keyController= TextEditingController();
   List<String> listofFiles= List();
+   String selectedFileName="";
+  String fpath="";
+  String opfilename="";
+  File myfile;
+  File chooseFile;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -29,14 +34,76 @@ class _FileDecryptionPageState extends State<FileDecryptionPage> {
             height: MediaQuery.of(context).padding.top,
           ),
           _chooseFileButton(),
+          Text(selectedFileName),
           SizedBox(
             height: 40,
           ),
           _inputKey(),
 
+          SizedBox(
+            height: 20,
+          ),
+          _encryptButton(),
+
         ],
       ),
     );
+  }
+
+  Widget _encryptButton(){
+
+    return MaterialButton(
+      onPressed: (){
+        _decryptFile();
+      },
+      child: Text("DECRYPT"),
+      color: Colors.red.shade300,
+    );
+  }
+
+  _decryptFile() async{
+     listofFiles=[];
+     _createFolder("decrypted files");
+     final mainDir= Directory("storage/emulated/0/encrypted files");
+     listtoaddFiles(mainDir);
+     ProgressDialog pr = ProgressDialog(context);
+     pr = ProgressDialog(context,type: ProgressDialogType.Normal, isDismissible: true, showLogs: false);
+     pr.style(
+       message: "Decrypting Please Wait..."
+     );
+    if(selectedFileName.isEmpty){
+      Fluttertoast.showToast(msg: "Please Choose a file to Decrypt");
+    }
+
+    else if(keyController.text.isEmpty){
+      Fluttertoast.showToast(msg: "Password Key Cannot be null");
+    }
+
+    else{
+       if(listofFiles.contains(chooseFile.path.substring(1,chooseFile.path.length))){
+       print("File already Decrypted");
+       Fluttertoast.showToast(msg: "File Already Encrypted");
+       }
+
+      else{
+        print(chooseFile.path);
+        print(listofFiles);
+      try{
+      var crypt= AesCrypt(keyController.text);
+      await pr.show();
+      Uint8List decryptedData=crypt.decryptDataFromFileSync(chooseFile.path);
+      myfile.writeAsBytesSync(decryptedData);
+      await pr.hide();
+      Fluttertoast.showToast(msg: "File Decrypted Successfully");
+  
+    }
+    catch(e){
+      await pr.hide();
+      Fluttertoast.showToast(msg: e.toString());
+     }
+
+   }
+    }
   }
 
   Widget _chooseFileButton(){
@@ -79,17 +146,6 @@ class _FileDecryptionPageState extends State<FileDecryptionPage> {
   }
 
   _filePicker() async{
-
-    ProgressDialog pr = ProgressDialog(context);
-     pr = ProgressDialog(context,type: ProgressDialogType.Normal, isDismissible: true, showLogs: false);
-     pr.style(
-       message: "Decrypting Please Wait..."
-     );
-     listofFiles=[];
-     _createFolder("decrypted files");
-     final mainDir= Directory("storage/emulated/0/decrypted files");
-     listtoaddFiles(mainDir);
-    var crypt = AesCrypt(keyController.text);
     
     File file=await FilePicker.getFile();
     String basename=p.basename(file.path);
@@ -97,22 +153,13 @@ class _FileDecryptionPageState extends State<FileDecryptionPage> {
     String outputfilename=basename.substring(0,basename.length-4);
 
     File newfile= File("storage/emulated/0/decrypted files/$outputfilename");
+    myfile=newfile;
+    chooseFile=file;
+    selectedFileName=basename;
+    setState(() {
+    });
     if(listofFiles.contains(outputfilename)){
       Fluttertoast.showToast(msg: "Already Decrypted");
-    }
-
-    else{
-    try{
-      await pr.show();
-      Uint8List decryptedData=crypt.decryptDataFromFileSync(file.path);
-      newfile.writeAsBytesSync(decryptedData);
-      await pr.hide();
-      Fluttertoast.showToast(msg: "File Decrypted Successfully");
-    }
-    catch(e){
-      Fluttertoast.showToast(msg: e.toString());
-    }
-
     }
   }
 
@@ -121,7 +168,6 @@ class _FileDecryptionPageState extends State<FileDecryptionPage> {
 
     for(FileSystemEntity each in fseList){
       listofFiles.add(each.path);
-      print(each.path);
     }
   }
 

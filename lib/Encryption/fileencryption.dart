@@ -6,7 +6,6 @@ import 'package:aes_crypt/aes_crypt.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:gx_file_picker/gx_file_picker.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 import 'package:permission_handler/permission_handler.dart';
 import 'package:progress_dialog/progress_dialog.dart';
@@ -21,6 +20,9 @@ class FileEncryptionPage extends StatefulWidget {
 class _FileEncryptionPageState extends State<FileEncryptionPage> {
   TextEditingController keyController= TextEditingController();
   List<String> listofFiles= List();
+  String selectedFileName="";
+  String fpath="";
+  File myfile;
   @override
   Widget build(BuildContext context) {
 
@@ -36,28 +38,79 @@ class _FileEncryptionPageState extends State<FileEncryptionPage> {
             height: MediaQuery.of(context).padding.top,
           ),
           _chooseFileButton(),
+
+          Text(selectedFileName),
           SizedBox(
             height: 40,
           ),
           _inputKey(),
 
-          MaterialButton(onPressed: (){
-            _readfile();
-          },
-          child: Text("Read"),)
+          SizedBox(
+            height: 20,
+          ),
+          _encryptButton(),
+
         ],
       ),
     );
   }
 
-  _readfile(){
+  Widget _encryptButton(){
 
-    String filePath="/data/user/0/com.example.FullyEncrypted/app_flutter/Gaurav+Dahal.jpg2021-01-18 23:18:38.640041.aes";
-
-    Uint8List readText=File(filePath).readAsBytesSync();
-    print(readText);
-  
+    return MaterialButton(
+      onPressed: (){
+        _encryptFile();
+      },
+      child: Text("ENCRYPT"),
+      color: Colors.red.shade300,
+    );
   }
+
+  _encryptFile() async{
+     listofFiles=[];
+     _createFolder("encrypted files");
+     final mainDir= Directory("storage/emulated/0/encrypted files");
+     listtoaddFiles(mainDir);
+     ProgressDialog pr = ProgressDialog(context);
+     pr = ProgressDialog(context,type: ProgressDialogType.Normal, isDismissible: true, showLogs: false);
+     pr.style(
+       message: "Encrypting Please Wait..."
+     );
+    if(selectedFileName.isEmpty){
+      Fluttertoast.showToast(msg: "Please Choose a file to Encrypt");
+    }
+
+    else if(keyController.text.isEmpty){
+      Fluttertoast.showToast(msg: "Password Key Cannot be null");
+    }
+
+    else{
+       if(listofFiles.contains(selectedFileName)){
+       print("File already Encrypted");
+       Fluttertoast.showToast(msg: "File Already Encrypted");
+       }
+
+       else{
+      try{
+      var crypt= AesCrypt(keyController.text);
+      Uint8List uint8list=myfile.readAsBytesSync();
+    
+      await pr.show();
+      await crypt.encryptDataToFile(uint8list, fpath).then((value) async {
+      await pr.hide();
+      Fluttertoast.showToast(msg: "Encrypted Sucessfully");
+    // listFiles(directory);
+      });
+  
+    }
+    catch(e){
+      print(e);
+    }
+
+       }
+    }
+  }
+
 
   Widget _chooseFileButton(){
 
@@ -72,44 +125,23 @@ class _FileEncryptionPageState extends State<FileEncryptionPage> {
   }
 
   _filePicker()async{
-     ProgressDialog pr = ProgressDialog(context);
-     pr = ProgressDialog(context,type: ProgressDialogType.Normal, isDismissible: true, showLogs: false);
-     pr.style(
-       message: "Encrypting Please Wait..."
-     );
-     
-     listofFiles=[];
-    _createFolder("encrypted files");
-    final mainDir= Directory("storage/emulated/0/encrypted files");
-    listtoaddFiles(mainDir);
-    var crypt= AesCrypt(keyController.text);
-    File file = await FilePicker.getFile();
-    String basename= p.basename(file.path);
-    String filePath="storage/emulated/0/encrypted files"+"/"+basename+".aes";
-
-
-   if(listofFiles.contains(filePath)){
-      print("File already Encrypted");
-      Fluttertoast.showToast(msg: "File Already Encrypted");
-    }
-
-    else{
     try{
-    Uint8List uint8list=file.readAsBytesSync();
-    
-    await pr.show();
-    await crypt.encryptDataToFile(uint8list, filePath).then((value) async {
-       await pr.hide();
-       Fluttertoast.showToast(msg: "Encrypted Sucessfully");
-    // listFiles(directory);
-      });
-  
+    File file = await FilePicker.getFile();
+    String basename= p.basename(file.path); 
+    String filePath="storage/emulated/0/encrypted files"+"/"+basename+".aes";
+    selectedFileName=basename;
+    fpath=filePath;
+    myfile=file;
+    setState(() {
+
+    });
+
     }
 
-    catch(e){
-      print(e);
-    }
-  }
+    on FileSystemException catch(e){
+      Fluttertoast.showToast(msg: e.toString());
+      print("hello");
+    }  
 }
 
   Future<String> _createFolder(String cow) async {
