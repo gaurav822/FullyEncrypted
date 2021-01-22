@@ -80,7 +80,7 @@ class _FileDecryptionPageState extends State<FileDecryptionPage> {
     }
 
     else{
-       if(listofFiles.contains(chooseFile.path.substring(1,chooseFile.path.length))){
+       if(listofFiles.contains(chooseFile.path)){
        print("File already Decrypted");
        Fluttertoast.showToast(msg: "File Already Encrypted");
        }
