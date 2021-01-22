@@ -32,8 +32,7 @@ class HomePage extends StatelessWidget {
 
   Widget _body(BuildContext context){
 
-    return SingleChildScrollView(
-          child: Padding(
+    return Padding(
             padding: const EdgeInsets.all(8.0),
             child: Wrap(
         runSpacing: 20,
@@ -65,14 +64,10 @@ class HomePage extends StatelessWidget {
                Navigator.push(context, MaterialPageRoute(builder: (context)=>FileDecryptionPage()));
              },
              child: _eachContainer(image: Image.asset("assets/decrypt.png", height: 70,color: Colors.greenAccent,),name: "File Decryption")),
-          _eachContainer(image: Icon(Icons.list,size: 60,color: Colors.amber,),name: "Codes List"),
-          _eachContainer(image: Icon(Icons.note_add_sharp,size: 50,color: Colors.white),name: "My Notes"),
-          _eachContainer(image: Icon(Icons.settings,size: 50,color: Colors.red),name: "Tools"),
-           _eachContainer(image:Icon(Icons.domain,size: 50,color: Colors.indigo) ,name: "About"),
           
         ],
       ),
-          ),
+
     );
   }
 
@@ -81,7 +76,7 @@ class HomePage extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.all(0),
       child: Container(
-            height: 250,
+            height: Get.height*.4,
             width: Get.width*.45,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(15),
