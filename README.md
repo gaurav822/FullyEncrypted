@@ -1,6 +1,6 @@
 # FullyEncrypted
 
-A new Flutter project.
+This is flutter application which was mainly designed to encrypt text as well as file for security purpose using AES algorithm.
 
 ## Getting Started
 
